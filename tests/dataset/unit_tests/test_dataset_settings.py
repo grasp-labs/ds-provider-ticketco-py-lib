@@ -16,6 +16,12 @@ from uuid import uuid4
 
 import pandas as pd
 import pytest
+from ds_resource_plugin_py_lib.common.resource.dataset.errors import ReadError
+from ds_resource_plugin_py_lib.common.resource.errors import (
+    NotSupportedError,
+    ResourceException,
+)
+from ds_resource_plugin_py_lib.common.resource.linked_service.errors import AuthenticationError
 
 from ds_provider_ticketco_py_lib.dataset import (
     ReadSettings,
@@ -27,7 +33,6 @@ from ds_provider_ticketco_py_lib.linked_service import (
     TicketcoLinkedService,
     TicketcoLinkedServiceSettings,
 )
-
 
 # ---------------------------------------------------------------------------
 # ReadSettings
@@ -197,56 +202,42 @@ def test_read_empty_response_returns_empty_dataframe():
 
 
 def test_create_raises_not_supported():
-    from ds_resource_plugin_py_lib.common.resource.errors import NotSupportedError
-
     dataset = _make_dataset()
     with pytest.raises(NotSupportedError):
         dataset.create()
 
 
 def test_update_raises_not_supported():
-    from ds_resource_plugin_py_lib.common.resource.errors import NotSupportedError
-
     dataset = _make_dataset()
     with pytest.raises(NotSupportedError):
         dataset.update()
 
 
 def test_delete_raises_not_supported():
-    from ds_resource_plugin_py_lib.common.resource.errors import NotSupportedError
-
     dataset = _make_dataset()
     with pytest.raises(NotSupportedError):
         dataset.delete()
 
 
 def test_upsert_raises_not_supported():
-    from ds_resource_plugin_py_lib.common.resource.errors import NotSupportedError
-
     dataset = _make_dataset()
     with pytest.raises(NotSupportedError):
         dataset.upsert()
 
 
 def test_list_raises_not_supported():
-    from ds_resource_plugin_py_lib.common.resource.errors import NotSupportedError
-
     dataset = _make_dataset()
     with pytest.raises(NotSupportedError):
         dataset.list()
 
 
 def test_rename_raises_not_supported():
-    from ds_resource_plugin_py_lib.common.resource.errors import NotSupportedError
-
     dataset = _make_dataset()
     with pytest.raises(NotSupportedError):
         dataset.rename()
 
 
 def test_purge_raises_not_supported():
-    from ds_resource_plugin_py_lib.common.resource.errors import NotSupportedError
-
     dataset = _make_dataset()
     with pytest.raises(NotSupportedError):
         dataset.purge()
@@ -262,9 +253,6 @@ def test_close_calls_linked_service_close():
 
 def test_read_raises_read_error_on_resource_exception():
     """read() wraps ResourceException into ReadError."""
-    from ds_resource_plugin_py_lib.common.resource.dataset.errors import ReadError
-    from ds_resource_plugin_py_lib.common.resource.errors import ResourceException
-
     dataset = _make_dataset(resource=TicketcoResource.EVENTS)
 
     exc = ResourceException(message="API error", status_code=500, details={})
@@ -278,8 +266,6 @@ def test_read_raises_read_error_on_resource_exception():
 
 def test_read_reraises_authentication_error():
     """read() re-raises AuthenticationError unchanged."""
-    from ds_resource_plugin_py_lib.common.resource.linked_service.errors import AuthenticationError
-
     dataset = _make_dataset(resource=TicketcoResource.EVENTS)
 
     connection_mock = MagicMock()

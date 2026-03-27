@@ -25,8 +25,7 @@ from dataclasses import dataclass, field
 from typing import Generic, TypeVar
 
 from ds_common_logger_py_lib import Logger
-from ds_protocol_http_py_lib import HttpLinkedService, HttpLinkedServiceSettings
-from ds_protocol_http_py_lib import enums
+from ds_protocol_http_py_lib import HttpLinkedService, HttpLinkedServiceSettings, enums
 
 from ..enums import ResourceType
 
