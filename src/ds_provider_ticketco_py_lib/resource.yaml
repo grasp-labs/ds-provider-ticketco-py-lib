@@ -1,0 +1,17 @@
+package-name: TicketCo
+name: TicketCo
+description: TicketCo provider for the DS Business Workflow
+
+linked_service:
+  - name: TicketCo
+    kind: DS.RESOURCE.LINKED_SERVICE.TICKETCO
+    version: 1.0.0
+    description: TicketCo linked service
+    class_name: ds_provider_ticketco_py_lib.linked_service.TicketcoLinkedService
+
+dataset:
+  - name: TicketCo
+    kind: DS.RESOURCE.DATASET.TICKETCO
+    version: 1.0.0
+    description: TicketCo dataset (events, customers, item_grosses)
+    class_name: ds_provider_ticketco_py_lib.dataset.TicketcoDataset
