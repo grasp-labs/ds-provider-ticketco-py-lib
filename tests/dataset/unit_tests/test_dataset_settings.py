@@ -218,3 +218,73 @@ def test_delete_raises_not_supported():
     dataset = _make_dataset()
     with pytest.raises(NotSupportedError):
         dataset.delete()
+
+
+def test_upsert_raises_not_supported():
+    from ds_resource_plugin_py_lib.common.resource.errors import NotSupportedError
+
+    dataset = _make_dataset()
+    with pytest.raises(NotSupportedError):
+        dataset.upsert()
+
+
+def test_list_raises_not_supported():
+    from ds_resource_plugin_py_lib.common.resource.errors import NotSupportedError
+
+    dataset = _make_dataset()
+    with pytest.raises(NotSupportedError):
+        dataset.list()
+
+
+def test_rename_raises_not_supported():
+    from ds_resource_plugin_py_lib.common.resource.errors import NotSupportedError
+
+    dataset = _make_dataset()
+    with pytest.raises(NotSupportedError):
+        dataset.rename()
+
+
+def test_purge_raises_not_supported():
+    from ds_resource_plugin_py_lib.common.resource.errors import NotSupportedError
+
+    dataset = _make_dataset()
+    with pytest.raises(NotSupportedError):
+        dataset.purge()
+
+
+def test_close_calls_linked_service_close():
+    """close() delegates to the linked service."""
+    dataset = _make_dataset()
+    dataset.linked_service.close = MagicMock()
+    dataset.close()
+    dataset.linked_service.close.assert_called_once()
+
+
+def test_read_raises_read_error_on_resource_exception():
+    """read() wraps ResourceException into ReadError."""
+    from ds_resource_plugin_py_lib.common.resource.dataset.errors import ReadError
+    from ds_resource_plugin_py_lib.common.resource.errors import ResourceException
+
+    dataset = _make_dataset(resource=TicketcoResource.EVENTS)
+
+    exc = ResourceException(message="API error", status_code=500, details={})
+    connection_mock = MagicMock()
+    connection_mock.get.side_effect = exc
+    dataset.linked_service._session = connection_mock
+
+    with pytest.raises(ReadError):
+        dataset.read()
+
+
+def test_read_reraises_authentication_error():
+    """read() re-raises AuthenticationError unchanged."""
+    from ds_resource_plugin_py_lib.common.resource.linked_service.errors import AuthenticationError
+
+    dataset = _make_dataset(resource=TicketcoResource.EVENTS)
+
+    connection_mock = MagicMock()
+    connection_mock.get.side_effect = AuthenticationError(message="Unauthorized", status_code=401, details={})
+    dataset.linked_service._session = connection_mock
+
+    with pytest.raises(AuthenticationError):
+        dataset.read()
