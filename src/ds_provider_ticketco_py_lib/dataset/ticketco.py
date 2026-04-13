@@ -137,7 +137,7 @@ class TicketcoDataset(
     )
 
     @property
-    def type(self) -> ResourceType:  # type: ignore[override]
+    def type(self) -> ResourceType:
         return ResourceType.TICKETCO_DATASET
 
     def read(self) -> None:
@@ -160,14 +160,14 @@ class TicketcoDataset(
 
         logger.debug("Reading TicketCo resource '%s' from %s", resource, url)
 
-        records: list[dict] = []
+        records: list[dict[str, Any]] = []
         page = 1
 
         try:
             while True:
                 params = {"token": api_token, "page": page}
                 response = self.linked_service.connection.get(url, params=params)
-                page_records: list[dict] = response.json().get(resource, [])
+                page_records: list[dict[str, Any]] = response.json().get(resource, [])
 
                 if not page_records:
                     logger.debug("Empty page at page=%d — stopping pagination", page)
