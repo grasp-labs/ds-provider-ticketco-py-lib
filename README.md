@@ -64,7 +64,7 @@ print(df.head())
 
 ## Authentication
 
-TicketCo uses a simple API token passed as the `token` query parameter on every request. 
+TicketCo uses a simple API token passed as the `token` query parameter on every request.
 
 ## Links
 
