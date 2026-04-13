@@ -11,7 +11,7 @@ Covers:
 - read() paginates and builds a DataFrame (mocked HTTP).
 """
 
-from unittest.mock import MagicMock
+from unittest.mock import MagicMock, PropertyMock, patch
 from uuid import uuid4
 
 import pandas as pd
@@ -132,10 +132,15 @@ def test_read_fetches_all_pages():
         _mock_response(page2, "events"),
         _mock_response(page3, "events"),
     ]
-    # Mock the public connection property instead of private _session
-    dataset.linked_service.connection = connection_mock
-
-    dataset.read()
+    
+    # Mock the read-only connection property using PropertyMock
+    with patch.object(
+        type(dataset.linked_service), 
+        "connection", 
+        new_callable=PropertyMock, 
+        return_value=connection_mock
+    ):
+        dataset.read()
 
     assert isinstance(dataset.output, pd.DataFrame)
     assert len(dataset.output) == 2
@@ -153,10 +158,15 @@ def test_read_respects_max_pages():
 
     connection_mock = MagicMock()
     connection_mock.get.return_value = _mock_response(page1, "customers")
-    # Mock the public connection property instead of private _session
-    dataset.linked_service.connection = connection_mock
-
-    dataset.read()
+    
+    # Mock the read-only connection property using PropertyMock
+    with patch.object(
+        type(dataset.linked_service), 
+        "connection", 
+        new_callable=PropertyMock, 
+        return_value=connection_mock
+    ):
+        dataset.read()
 
     # Should only call get once (max_pages=1)
     assert connection_mock.get.call_count == 1
@@ -177,10 +187,15 @@ def test_read_applies_column_filter():
         _mock_response(page1, "events"),
         _mock_response([], "events"),
     ]
-    # Mock the public connection property instead of private _session
-    dataset.linked_service.connection = connection_mock
-
-    dataset.read()
+    
+    # Mock the read-only connection property using PropertyMock
+    with patch.object(
+        type(dataset.linked_service), 
+        "connection", 
+        new_callable=PropertyMock, 
+        return_value=connection_mock
+    ):
+        dataset.read()
 
     assert list(dataset.output.columns) == ["id"]
 
@@ -191,10 +206,15 @@ def test_read_empty_response_returns_empty_dataframe():
 
     connection_mock = MagicMock()
     connection_mock.get.return_value = _mock_response([], "item_grosses")
-    # Mock the public connection property instead of private _session
-    dataset.linked_service.connection = connection_mock
-
-    dataset.read()
+    
+    # Mock the read-only connection property using PropertyMock
+    with patch.object(
+        type(dataset.linked_service), 
+        "connection", 
+        new_callable=PropertyMock, 
+        return_value=connection_mock
+    ):
+        dataset.read()
 
     assert isinstance(dataset.output, pd.DataFrame)
     assert dataset.output.empty
