@@ -64,11 +64,7 @@ print(df.head())
 
 ## Authentication
 
-TicketCo uses a simple API token passed as the `token` query parameter on every
-request. Store the token in an environment variable — never hard-code it.
-
-- **Production API key:** retrieve from AWS Parameter Store (see old integration docs)
-- **Demo API key:** `8sny5zmbL_P_yw4w9HQq`
+TicketCo uses a simple API token passed as the `token` query parameter on every request. 
 
 ## Links
 
