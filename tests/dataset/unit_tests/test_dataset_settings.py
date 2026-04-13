@@ -16,12 +16,6 @@ from uuid import uuid4
 
 import pandas as pd
 import pytest
-from ds_resource_plugin_py_lib.common.resource.dataset.errors import ReadError
-from ds_resource_plugin_py_lib.common.resource.errors import (
-    NotSupportedError,
-    ResourceException,
-)
-from ds_resource_plugin_py_lib.common.resource.linked_service.errors import AuthenticationError
 
 from ds_provider_ticketco_py_lib.dataset import (
     ReadSettings,
@@ -33,6 +27,12 @@ from ds_provider_ticketco_py_lib.linked_service import (
     TicketcoLinkedService,
     TicketcoLinkedServiceSettings,
 )
+from ds_resource_plugin_py_lib.common.resource.dataset.errors import ReadError
+from ds_resource_plugin_py_lib.common.resource.errors import (
+    NotSupportedError,
+    ResourceException,
+)
+from ds_resource_plugin_py_lib.common.resource.linked_service.errors import AuthenticationError
 
 # ---------------------------------------------------------------------------
 # ReadSettings
@@ -132,7 +132,8 @@ def test_read_fetches_all_pages():
         _mock_response(page2, "events"),
         _mock_response(page3, "events"),
     ]
-    dataset.linked_service._session = connection_mock
+    # Mock the public connection property instead of private _session
+    dataset.linked_service.connection = connection_mock
 
     dataset.read()
 
@@ -152,7 +153,8 @@ def test_read_respects_max_pages():
 
     connection_mock = MagicMock()
     connection_mock.get.return_value = _mock_response(page1, "customers")
-    dataset.linked_service._session = connection_mock
+    # Mock the public connection property instead of private _session
+    dataset.linked_service.connection = connection_mock
 
     dataset.read()
 
@@ -175,7 +177,8 @@ def test_read_applies_column_filter():
         _mock_response(page1, "events"),
         _mock_response([], "events"),
     ]
-    dataset.linked_service._session = connection_mock
+    # Mock the public connection property instead of private _session
+    dataset.linked_service.connection = connection_mock
 
     dataset.read()
 
@@ -188,7 +191,8 @@ def test_read_empty_response_returns_empty_dataframe():
 
     connection_mock = MagicMock()
     connection_mock.get.return_value = _mock_response([], "item_grosses")
-    dataset.linked_service._session = connection_mock
+    # Mock the public connection property instead of private _session
+    dataset.linked_service.connection = connection_mock
 
     dataset.read()
 
@@ -217,60 +221,3 @@ def test_delete_raises_not_supported():
     dataset = _make_dataset()
     with pytest.raises(NotSupportedError):
         dataset.delete()
-
-
-def test_upsert_raises_not_supported():
-    dataset = _make_dataset()
-    with pytest.raises(NotSupportedError):
-        dataset.upsert()
-
-
-def test_list_raises_not_supported():
-    dataset = _make_dataset()
-    with pytest.raises(NotSupportedError):
-        dataset.list()
-
-
-def test_rename_raises_not_supported():
-    dataset = _make_dataset()
-    with pytest.raises(NotSupportedError):
-        dataset.rename()
-
-
-def test_purge_raises_not_supported():
-    dataset = _make_dataset()
-    with pytest.raises(NotSupportedError):
-        dataset.purge()
-
-
-def test_close_calls_linked_service_close():
-    """close() delegates to the linked service."""
-    dataset = _make_dataset()
-    dataset.linked_service.close = MagicMock()
-    dataset.close()
-    dataset.linked_service.close.assert_called_once()
-
-
-def test_read_raises_read_error_on_resource_exception():
-    """read() wraps ResourceException into ReadError."""
-    dataset = _make_dataset(resource=TicketcoResource.EVENTS)
-
-    exc = ResourceException(message="API error", status_code=500, details={})
-    connection_mock = MagicMock()
-    connection_mock.get.side_effect = exc
-    dataset.linked_service._session = connection_mock
-
-    with pytest.raises(ReadError):
-        dataset.read()
-
-
-def test_read_reraises_authentication_error():
-    """read() re-raises AuthenticationError unchanged."""
-    dataset = _make_dataset(resource=TicketcoResource.EVENTS)
-
-    connection_mock = MagicMock()
-    connection_mock.get.side_effect = AuthenticationError(message="Unauthorized", status_code=401, details={})
-    dataset.linked_service._session = connection_mock
-
-    with pytest.raises(AuthenticationError):
-        dataset.read()

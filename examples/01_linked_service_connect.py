@@ -10,9 +10,13 @@ This example demonstrates how to:
 - Use the linked service as a foundation for dataset reads
 
 Prerequisites:
-    Set environment variables or provide credentials directly:
-    - TICKETCO_API_TOKEN: Your TicketCo API token
+    Set environment variables:
+    - TICKETCO_API_TOKEN: Your TicketCo API token (required)
     - TICKETCO_HOST: (optional) Override host, e.g. https://demo.ticketco.events
+
+    For demo/testing, you can use the public demo token:
+        export TICKETCO_API_TOKEN="my_token"
+        export TICKETCO_HOST="https://demo.ticketco.events"
 """
 
 from __future__ import annotations
@@ -22,6 +26,11 @@ import os
 from uuid import uuid4
 
 from ds_common_logger_py_lib import Logger
+from ds_resource_plugin_py_lib.common.resource.linked_service.errors import (
+    AuthenticationError,
+    AuthorizationError,
+    ConnectionError,
+)
 
 from ds_provider_ticketco_py_lib.linked_service.ticketco import (
     TicketcoLinkedService,
@@ -34,7 +43,12 @@ logger = Logger.get_logger(__name__)
 
 def main() -> None:
     """Main function demonstrating TicketCo linked service connection."""
-    api_token = os.getenv("TICKETCO_API_TOKEN", "8sny5zmbL_P_yw4w9HQq")
+    api_token = os.getenv("TICKETCO_API_TOKEN")
+    if not api_token:
+        raise ValueError(
+            "TICKETCO_API_TOKEN environment variable is required. "
+            "See the Prerequisites section in this file's docstring for setup instructions."
+        )
     host = os.getenv("TICKETCO_HOST", "https://demo.ticketco.events")
 
     settings = TicketcoLinkedServiceSettings(
@@ -61,7 +75,7 @@ def main() -> None:
             logger.error("Connection test failed: %s", message)
             return
 
-    except ConnectionError as exc:
+    except (ConnectionError, AuthenticationError, AuthorizationError) as exc:
         logger.error("Failed to connect to TicketCo: %s", exc)
         raise
     except Exception as exc:
