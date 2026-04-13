@@ -16,6 +16,16 @@ from uuid import uuid4
 
 import pandas as pd
 import pytest
+from ds_resource_plugin_py_lib.common.resource.dataset.errors import ReadError
+from ds_resource_plugin_py_lib.common.resource.errors import (
+    NotSupportedError,
+    ResourceException,
+)
+from ds_resource_plugin_py_lib.common.resource.linked_service.errors import (
+    AuthenticationError,
+    AuthorizationError,
+    ConnectionError,
+)
 
 from ds_provider_ticketco_py_lib.dataset import (
     ReadSettings,
@@ -27,12 +37,6 @@ from ds_provider_ticketco_py_lib.linked_service import (
     TicketcoLinkedService,
     TicketcoLinkedServiceSettings,
 )
-from ds_resource_plugin_py_lib.common.resource.dataset.errors import ReadError
-from ds_resource_plugin_py_lib.common.resource.errors import (
-    NotSupportedError,
-    ResourceException,
-)
-from ds_resource_plugin_py_lib.common.resource.linked_service.errors import AuthenticationError
 
 # ---------------------------------------------------------------------------
 # ReadSettings
@@ -132,12 +136,12 @@ def test_read_fetches_all_pages():
         _mock_response(page2, "events"),
         _mock_response(page3, "events"),
     ]
-    
+
     # Mock the read-only connection property using PropertyMock
     with patch.object(
-        type(dataset.linked_service), 
-        "connection", 
-        new_callable=PropertyMock, 
+        type(dataset.linked_service),
+        "connection",
+        new_callable=PropertyMock,
         return_value=connection_mock
     ):
         dataset.read()
@@ -158,12 +162,12 @@ def test_read_respects_max_pages():
 
     connection_mock = MagicMock()
     connection_mock.get.return_value = _mock_response(page1, "customers")
-    
+
     # Mock the read-only connection property using PropertyMock
     with patch.object(
-        type(dataset.linked_service), 
-        "connection", 
-        new_callable=PropertyMock, 
+        type(dataset.linked_service),
+        "connection",
+        new_callable=PropertyMock,
         return_value=connection_mock
     ):
         dataset.read()
@@ -187,12 +191,12 @@ def test_read_applies_column_filter():
         _mock_response(page1, "events"),
         _mock_response([], "events"),
     ]
-    
+
     # Mock the read-only connection property using PropertyMock
     with patch.object(
-        type(dataset.linked_service), 
-        "connection", 
-        new_callable=PropertyMock, 
+        type(dataset.linked_service),
+        "connection",
+        new_callable=PropertyMock,
         return_value=connection_mock
     ):
         dataset.read()
@@ -206,12 +210,12 @@ def test_read_empty_response_returns_empty_dataframe():
 
     connection_mock = MagicMock()
     connection_mock.get.return_value = _mock_response([], "item_grosses")
-    
+
     # Mock the read-only connection property using PropertyMock
     with patch.object(
-        type(dataset.linked_service), 
-        "connection", 
-        new_callable=PropertyMock, 
+        type(dataset.linked_service),
+        "connection",
+        new_callable=PropertyMock,
         return_value=connection_mock
     ):
         dataset.read()
@@ -241,3 +245,125 @@ def test_delete_raises_not_supported():
     dataset = _make_dataset()
     with pytest.raises(NotSupportedError):
         dataset.delete()
+
+
+def test_upsert_raises_not_supported():
+    dataset = _make_dataset()
+    with pytest.raises(NotSupportedError):
+        dataset.upsert()
+
+
+def test_list_raises_not_supported():
+    dataset = _make_dataset()
+    with pytest.raises(NotSupportedError):
+        dataset.list()
+
+
+def test_rename_raises_not_supported():
+    dataset = _make_dataset()
+    with pytest.raises(NotSupportedError):
+        dataset.rename()
+
+
+def test_purge_raises_not_supported():
+    dataset = _make_dataset()
+    with pytest.raises(NotSupportedError):
+        dataset.purge()
+
+
+def test_close_calls_linked_service_close():
+    """close() delegates to linked_service.close()."""
+    dataset = _make_dataset()
+
+    with patch.object(dataset.linked_service, "close") as mock_close:
+        dataset.close()
+
+    mock_close.assert_called_once()
+
+
+# ---------------------------------------------------------------------------
+# read() error handling
+# ---------------------------------------------------------------------------
+
+
+def test_read_propagates_authentication_error():
+    """read() propagates AuthenticationError from connection."""
+    dataset = _make_dataset(resource=TicketcoResource.EVENTS)
+
+    connection_mock = MagicMock()
+    connection_mock.get.side_effect = AuthenticationError(
+        message="Invalid token",
+        details={},
+    )
+
+    with patch.object(
+        type(dataset.linked_service),
+        "connection",
+        new_callable=PropertyMock,
+        return_value=connection_mock
+    ), pytest.raises(AuthenticationError):
+        dataset.read()
+
+
+def test_read_propagates_authorization_error():
+    """read() propagates AuthorizationError from connection."""
+    dataset = _make_dataset(resource=TicketcoResource.CUSTOMERS)
+
+    connection_mock = MagicMock()
+    connection_mock.get.side_effect = AuthorizationError(
+        message="Forbidden",
+        details={},
+    )
+
+    with patch.object(
+        type(dataset.linked_service),
+        "connection",
+        new_callable=PropertyMock,
+        return_value=connection_mock
+    ), pytest.raises(AuthorizationError):
+        dataset.read()
+
+
+def test_read_propagates_connection_error():
+    """read() propagates ConnectionError from connection."""
+    dataset = _make_dataset(resource=TicketcoResource.ITEM_GROSSES)
+
+    connection_mock = MagicMock()
+    connection_mock.get.side_effect = ConnectionError(
+        message="Connection failed",
+        details={},
+    )
+
+    with patch.object(
+        type(dataset.linked_service),
+        "connection",
+        new_callable=PropertyMock,
+        return_value=connection_mock
+    ), pytest.raises(ConnectionError):
+        dataset.read()
+
+
+def test_read_converts_resource_exception_to_read_error():
+    """read() converts ResourceException to ReadError with dataset type in details."""
+    dataset = _make_dataset(resource=TicketcoResource.EVENTS)
+
+    connection_mock = MagicMock()
+    connection_mock.get.side_effect = ResourceException(
+        message="API error",
+        status_code=500,
+        details={"original": "error"},
+    )
+
+    with patch.object(
+        type(dataset.linked_service),
+        "connection",
+        new_callable=PropertyMock,
+        return_value=connection_mock
+    ), pytest.raises(ReadError) as exc_info:
+        dataset.read()
+
+    # Verify ReadError has the right message and details
+    assert "API error" in str(exc_info.value)
+    assert exc_info.value.details["type"] == "DS.RESOURCE.DATASET.TICKETCO"
+    assert exc_info.value.details["resource"] == "events"
+    assert exc_info.value.details["original"] == "error"
