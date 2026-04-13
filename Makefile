@@ -8,7 +8,7 @@
 SRC_DIR         ?= src
 TEST_DIR        ?= tests
 DOCS_DIR        ?= docs
-MODULE_NAME     ?= {{PYTHON_MODULE_NAME}}
+MODULE_NAME     ?= ds_provider_ticketco_py_lib
 
 # Colors for terminal output
 BLUE := \033[0;34m
@@ -20,7 +20,7 @@ NC := \033[0m # No Color
 
 .PHONY: help
 help: ## Show this help message
-	@echo "$(BLUE)DS Shared Logger - Development Commands$(NC)"
+	@echo "$(BLUE)DS TicketCo Provider - Development Commands$(NC)"
 	@echo ""
 	@echo "$(GREEN)Available commands:$(NC)"
 	@awk 'BEGIN {FS = ":.*?## "} /^[a-zA-Z_-]+:.*?## / {printf "  $(YELLOW)%-20s$(NC) %s\n", $$1, $$2}' $(MAKEFILE_LIST)

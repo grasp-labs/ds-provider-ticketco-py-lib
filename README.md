@@ -1,151 +1,72 @@
-# {{PROJECT_NAME}}
+# ds-provider-ticketco-py-lib
 
-![Python Versions](https://img.shields.io/badge/python-3.9%20|%203.10%20|%203.11%20|%203.12%20|%203.13-blue)
-[![PyPI version](https://badge.fury.io/py/{{PROJECT_NAME}}.svg?kill_cache=1)](https://badge.fury.io/py/{{PROJECT_NAME}})
-[![Build Status](https://github.com/grasp-labs/{{GITHUB_REPO}}/actions/workflows/build.yaml/badge.svg)](https://github.com/grasp-labs/{{GITHUB_REPO}}/actions/workflows/build.yaml)
-[![codecov](https://codecov.io/gh/grasp-labs/{{GITHUB_REPO}}/graph/badge.svg?token=EO3YCNCZFS)](https://codecov.io/gh/grasp-labs/{{GITHUB_REPO}})
-[![License: Apache-2.0](https://img.shields.io/badge/License-Apache%202.0-blue.svg)](https://opensource.org/licenses/Apache-2.0)
+A DS provider library for the [TicketCo](https://ticketco.events) event ticketing platform.
 
-DS package for {{PROJECT_NAME}}
+Wraps the TicketCo public REST API as a reusable, installable Python library,
+exposing a **linked service** (authenticated HTTP connection) and a **dataset**
+(paginated resource reads) via the standard DS provider interface.
 
-## Quick Start
+## Resources
 
-### Quick Setup
+| Resource | API Endpoint | Description |
+|---|---|---|
+| `events` | `GET /api/public/v1/events` | Event listings |
+| `customers` | `GET /api/public/v1/customers` | Customer records |
+| `item_grosses` | `GET /api/public/v1/item_grosses` | Ticket/item gross sales |
 
-```shell
-# 1. Install dependencies
-uv sync --all-extras --dev
+## Installation
 
-# 2. Install pre-commit hooks
-uv run pre-commit install
-
-# 3. Verify setup
-make test
+```bash
+pip install ds-provider-ticketco-py-lib
 ```
 
-## Development
+## Quick start
 
-### Available Commands
+```python
+import os
+from uuid import uuid4
+from ds_provider_ticketco_py_lib.linked_service import (
+    TicketcoLinkedService,
+    TicketcoLinkedServiceSettings,
+)
+from ds_provider_ticketco_py_lib.dataset import (
+    TicketcoDataset,
+    TicketcoDatasetSettings,
+    ReadSettings,
+)
+from ds_provider_ticketco_py_lib.enums import TicketcoResource
 
-Use the Makefile for all development tasks:
+linked_service = TicketcoLinkedService(
+    id=uuid4(),
+    name="ticketco",
+    version="1.0.0",
+    settings=TicketcoLinkedServiceSettings(
+        api_token=os.environ["TICKETCO_API_TOKEN"],
+        host="https://demo.ticketco.events",   # omit for production
+    ),
+)
+linked_service.connect()
 
-```shell
-# Show all available commands
-make help
-
-# Code Quality
-make lint           # Check code quality with ruff
-make format         # Format code with ruff
-make type-check     # Run mypy type checking
-make security-check # Run security checks with bandit
-
-# Testing
-make test          # Run tests
-make test-cov      # Run tests with coverage (requires 95%)
-
-# Build and Publish
-make build         # Build package
-make docs          # Build documentation
-make publish-test  # Upload to TestPyPI
-make publish       # Upload to PyPI
+dataset = TicketcoDataset(
+    id=uuid4(),
+    name="events",
+    version="1.0.0",
+    settings=TicketcoDatasetSettings(
+        resource=TicketcoResource.EVENTS,
+        read=ReadSettings(max_pages=5, columns=["id", "title", "start_at"]),
+    ),
+    linked_service=linked_service,
+)
+dataset.read()
+df = dataset.output
+print(df.head())
 ```
 
-### Version Management
+## Authentication
 
-```shell
-# Show current version
-make version
+TicketCo uses a simple API token passed as the `token` query parameter on every request.
 
-# Tag and release
-make tag           # Create git tag and push (triggers release)
-```
+## Links
 
-> **⚠️ Warning**: The `make tag` command will create a git tag and
-> push it to the remote repository, which may trigger automated
-> releases. Ensure you have updated `pyproject.toml` with the new version
-> and committed all changes before running this command.
-
-### Pre-commit Hooks
-
-This project uses pre-commit hooks to ensure code quality:
-
-```shell
-install pre-commit
-```
-
-### Building Documentation
-
-```shell
-# Build documentation
-make docs
-
-# View documentation (macOS)
-open docs/build/html/index.html
-
-# View documentation (Linux)
-xdg-open docs/build/html/index.html
-```
-
-### Testing
-
-```shell
-# Run basic tests
-make test
-
-# Run tests with coverage (requires 95% coverage)
-make test-cov
-
-# Run specific test file
-uv run pytest tests/test_example.py -v
-```
-
-## Project Structure
-
-```text
-.
-├── .config/                   # Configuration tooling files
-├── .github/
-│   ├── workflows/            # CI/CD workflows
-│   └── CODEOWNERS            # Code ownership file
-├── src/
-│   └── {{PYTHON_MODULE_NAME}}/     # Rename to your module name
-│       └── __init__.py
-├── .pre-commit-config.yaml   # Pre-commit hooks configuration
-├── tests/                    # Test files
-├── docs/                     # Sphinx documentation
-├── LICENSE-APACHE            # License file
-├── pyproject.toml            # Project configuration
-├── Makefile                  # Development commands
-├── codecov.yaml              # Codecov configuration
-├── CONTRIBUTING.md           # Contribution guidelines
-├── PyPI.md                   # PyPI publishing guide
-├── README.md                 # This file
-```
-
-## Features
-
-- **Modern Python Tooling**: Uses `uv` for fast dependency management
-- **Type Safety**: Strict mypy configuration with full type hints
-- **Code Quality**: Ruff for linting and formatting
-- **Testing**: Pytest with 95% coverage requirement
-- **Documentation**: Sphinx with autoapi for automatic API docs
-- **CI/CD**: GitHub Actions for testing, building, and publishing
-- **Pre-commit Hooks**: Automated code quality checks
-- **Docker Support**: Containerized build environment
-
-## Requirements
-
-- Python 3.9+
-- [uv](https://github.com/astral-sh/uv) package manager
-- Make (for development commands)
-
-## Documentation
-
-- [CONTRIBUTING.md](CONTRIBUTING.md) - Contribution guidelines
-- [PyPI.md](PyPI.md) - PyPI publishing guide
-- [README.md](README.md) - This file
-
-## License
-
-This package is licensed under the Apache License 2.0.
-See [LICENSE-APACHE](LICENSE-APACHE) for details.
+- [API documentation](https://apidoc.ticketco.events/)
+- [Demo environment](https://demo.ticketco.events)

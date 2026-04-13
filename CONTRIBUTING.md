@@ -16,8 +16,8 @@ and standards for contributing to DS Python Library packages.
 2. **Clone your fork**:
 
    ```bash
-   git clone https://github.com/grasp-labs/{{GITHUB_REPO}}.git
-   cd {{GITHUB_REPO}}
+   git clone https://github.com/grasp-labs/ds-provider-ticketco-py-lib.git
+   cd ds-provider-ticketco-py-lib
    ```
 
 3. **Set up development environment**:
@@ -163,23 +163,25 @@ def process_data(data: list[str], threshold: float = 0.5) -> dict[str, int]:
 
 ```python
 """
-File: test_example.py
-Description: Tests for example module
+File: test_ticketco_dataset.py
+Description: Tests for TicketCo dataset module
 """
 
 import pytest
-from {{PYTHON_MODULE_NAME}}.example import example_function
+from ds_provider_ticketco_py_lib.dataset import TicketcoDatasetSettings
+from ds_provider_ticketco_py_lib.enums import TicketcoResource
 
 
-def test_example_function_basic() -> None:
-    """Test basic functionality of example_function."""
-    result = example_function(1, "test")
-    assert result is True
+def test_dataset_settings_stores_resource() -> None:
+    """Test that dataset settings stores the resource correctly."""
+    settings = TicketcoDatasetSettings(resource=TicketcoResource.EVENTS)
+    assert settings.resource == TicketcoResource.EVENTS
 
 
-def test_example_function_edge_cases() -> None:
-    """Test edge cases."""
-    # Test implementation
+def test_dataset_settings_invalid_resource() -> None:
+    """Test that invalid resource raises error."""
+    with pytest.raises(ValueError):
+        TicketcoDatasetSettings(resource="invalid_resource")
 ```
 
 ### Running Tests
@@ -192,7 +194,7 @@ make test
 make test-cov
 
 # Run specific test file
-uv run pytest tests/test_example.py -v
+uv run pytest tests/dataset/unit_tests/test_dataset_settings.py -v
 ```
 
 ## Pre-commit Hooks
